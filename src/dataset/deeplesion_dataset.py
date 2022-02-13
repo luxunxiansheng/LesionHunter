@@ -43,8 +43,47 @@ class DataType(Enum):
     Val = 2
     Test = 3
 
+
+def _create_measuremnt(row):
+    measurement_coordicats = row["Measurement_coordinates"].split(",")
+    diameters = row["Lesion_diameters_Pixel_"].split(",")
+    long_axis = [
+                float(measurement_coordicats[0]), 
+                float(measurement_coordicats[1]),
+                float(measurement_coordicats[2]),
+                float(measurement_coordicats[3]),
+                float(diameters[0]),
+                ]
+
+    short_axis =[
+                float(measurement_coordicats[4]), 
+                float(measurement_coordicats[5]),
+                float(measurement_coordicats[6]),
+                float(measurement_coordicats[7]),
+                float(diameters[1]),
+                ]
+    
+    return long_axis,short_axis
+
+
+def _create_bbox(row):
+    bounding_box = row["Bounding_boxes"].split(",")            
+    return {
+            "bbox": [
+                    float(bounding_box[0]), 
+                    float(bounding_box[1]),
+                    float(bounding_box[2]), 
+                    float(bounding_box[3])
+                    ],
+            "bbox_mode": BoxMode.XYXY_ABS,
+            "category_id": int(row["Coarse_lesion_type"]) if int(row["Coarse_lesion_type"])>0 else 0,
+            "long_axis": _create_measuremnt(row)[0],
+            "short_axis": _create_measuremnt(row)[1],
+            }
+
+
 def get_deeplesion_dicts(img_dir:str,data_type:DataType):    
-    dataset_dicts = []
+    dataset_dicts = {}
     csv_file = os.path.join(img_dir, "DL_info.csv")
     patient_df = pd.read_csv(csv_file)
 
@@ -52,61 +91,30 @@ def get_deeplesion_dicts(img_dir:str,data_type:DataType):
         dt = row["Train_Val_Test"]
         if dt != data_type.value:
             continue   
-        
-        record = {}
 
         img_path = os.path.join(img_dir, 
                                 'Images_png',
                                 '{Patient_index:06d}_{Study_index:02d}_{Series_ID:02d}'.format(**row),
                                 '{Key_slice_index:03d}.png'.format(**row))
         
+        if img_path in dataset_dicts:
+            record = dataset_dicts[img_path]            
+        else:
+            record = {}
+            record["file_name"] = img_path
+            record["image_id"] = idx
+            record["width"] =  int(row["Image_size"].split(",")[0])
+            record["height"] = int(row["Image_size"].split(",")[1])
+            record['dicom_windows'] = row["DICOM_windows"]
+            record["annotations"] = []
 
-        
-        record["file_name"] = img_path
-        record["image_id"] = idx
-        record["width"] =  int(row["Image_size"].split(",")[0])
-        record["height"] = int(row["Image_size"].split(",")[1])
 
+        record["annotations"].append(_create_bbox(row))
+            
+            
+        dataset_dicts[img_path] = record
 
-        bounding_box = row["Bounding_boxes"].split(",")
-        record["annotations"] = [
-            {
-                "bbox": [
-                    float(bounding_box[0]), 
-                    float(bounding_box[1]),
-                    float(bounding_box[2]), 
-                    float(bounding_box[3])
-                ],
-                "bbox_mode": BoxMode.XYXY_ABS,
-                "category_id": int(row["Coarse_lesion_type"]) if int(row["Coarse_lesion_type"])>0 else 0,
-                "segmentation": [],
-            }
-        ]
-    
-        measurement_coordicats = row["Measurement_coordinates"].split(",")
-        diameters = row["Lesion_diameters_Pixel_"].split(",")
-        record["long_axis"] = [
-            float(measurement_coordicats[0]), 
-            float(measurement_coordicats[1]),
-            float(measurement_coordicats[2]),
-            float(measurement_coordicats[3]),
-            float(diameters[0]),
-            ]
-
-        record["short_axis"] = [
-            float(measurement_coordicats[4]), 
-            float(measurement_coordicats[5]),
-            float(measurement_coordicats[6]),
-            float(measurement_coordicats[7]),
-            float(diameters[1]),
-        ]
-
-    
-        record['dicom_windows'] = row["DICOM_windows"]
-        
-        dataset_dicts.append(record)
-
-    return dataset_dicts
+    return dataset_dicts.values()
     
 
 for data_type in [DataType.Train, DataType.Val, DataType.Test]:
