@@ -52,14 +52,15 @@ class TestDeepLesion(unittest.TestCase):
         self.dataset_dicts = get_deeplesion_dicts(deep_lesion_path, DataType.Train)
     
     def test_deeplesion_dataset(self):
-        deeplesion_metadata = MetadataCatalog.get("Deeplesion_Train")        
-        for d in random.sample(self.dataset_dicts, 3):
-            img = cv2.imread(d["file_name"])
-            img= cv2.normalize(img, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
-            visualizer = Visualizer(img[:, :, ::-1], metadata=deeplesion_metadata, scale=2.0)
-            out = visualizer.draw_dataset_dict(d)
-            img = out.get_image()[:, :, ::-1]
-            self.writer.add_image('train',img,d['image_id'],dataformats='HWC')
+        deeplesion_metadata = MetadataCatalog.get("Deeplesion_Train") 
+        d = self.dataset_dicts[111]       
+        
+        img = cv2.imread(d["file_name"])
+        img= cv2.normalize(img, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
+        visualizer = Visualizer(img[:, :, ::-1], metadata=deeplesion_metadata, scale=1.5)
+        out = visualizer.draw_dataset_dict(d)
+        img = out.get_image()[:, :, ::-1]
+        self.writer.add_image('train',img,d['image_id'],dataformats='HWC')
 
 
 if __name__ == "__main__":

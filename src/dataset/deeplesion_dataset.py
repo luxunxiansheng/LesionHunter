@@ -114,7 +114,7 @@ def get_deeplesion_dicts(img_dir:str,data_type:DataType):
             
         dataset_dicts[img_path] = record
 
-    return dataset_dicts.values()
+    return list(dataset_dicts.values())
     
 
 for data_type in [DataType.Train, DataType.Val, DataType.Test]:
