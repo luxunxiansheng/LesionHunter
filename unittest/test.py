@@ -43,20 +43,23 @@ from detectron2.utils.visualizer import Visualizer
 
 from deeplesion_dataset import DataType, get_deeplesion_dicts
 
-class TestDeepLesion(unittest.TestCase):
-    
-    writer = SummaryWriter(work_folder+'log/')
 
-    deeplesion_metadata = MetadataCatalog.get("Deeplesion_Train")
+class TestDeepLesion(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.writer = SummaryWriter(work_folder+'log/')
+        deep_lesion_path = "/home/yan/data/deeplesion"
+        self.dataset_dicts = get_deeplesion_dicts(deep_lesion_path, DataType.Train)
     
-    deep_lesion_path = "/home/yan/data/deeplesion"
-    dataset_dicts = get_deeplesion_dicts(deep_lesion_path, DataType.Train)
-    for d in random.sample(dataset_dicts, 3):
-        img = cv2.imread(d["file_name"])
-        visualizer = Visualizer(img[:, :, ::-1], metadata=deeplesion_metadata, scale=0.5)
-        out = visualizer.draw_dataset_dict(d)
-        img = out.get_image()[:, :, ::-1]
-        writer.add_image('train', img, 0)
+    def test_deeplesion_dataset(self):
+        deeplesion_metadata = MetadataCatalog.get("Deeplesion_Train")        
+        for d in random.sample(self.dataset_dicts, 3):
+            img = cv2.imread(d["file_name"])
+            img= cv2.normalize(img, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
+            visualizer = Visualizer(img[:, :, ::-1], metadata=deeplesion_metadata, scale=2.0)
+            out = visualizer.draw_dataset_dict(d)
+            img = out.get_image()[:, :, ::-1]
+            self.writer.add_image('train',img,d['image_id'],dataformats='HWC')
 
 
 if __name__ == "__main__":

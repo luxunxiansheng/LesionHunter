@@ -69,7 +69,7 @@ def get_deeplesion_dicts(img_dir:str,data_type:DataType):
 
 
         bounding_box = row["Bounding_boxes"].split(",")
-        record["annotation"] = [
+        record["annotations"] = [
             {
                 "bbox": [
                     float(bounding_box[0]), 
