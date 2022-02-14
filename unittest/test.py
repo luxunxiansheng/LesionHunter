@@ -41,7 +41,7 @@ from torch.utils.tensorboard import SummaryWriter
 from detectron2.data import MetadataCatalog, DatasetCatalog
 from detectron2.utils.visualizer import Visualizer
 
-from deeplesion_dataset import DataType, get_deeplesion_dicts
+from deeplesion import DataType, load_deeplesion_instances
 
 
 class TestDeepLesion(unittest.TestCase):
@@ -49,7 +49,7 @@ class TestDeepLesion(unittest.TestCase):
     def setUp(self) -> None:
         self.writer = SummaryWriter(work_folder+'log/')
         deep_lesion_path = "/home/yan/data/deeplesion"
-        self.dataset_dicts = get_deeplesion_dicts(deep_lesion_path, DataType.Train)
+        self.dataset_dicts = load_deeplesion_instances(deep_lesion_path, DataType.Train)
     
     def test_deeplesion_dataset(self):
         deeplesion_metadata = MetadataCatalog.get("Deeplesion_Train") 
@@ -64,5 +64,5 @@ class TestDeepLesion(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    print("Lesion Tracker:")
+    print("Lesion Tracker Testing....")
     unittest.main()

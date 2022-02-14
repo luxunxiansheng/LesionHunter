@@ -1,0 +1,7 @@
+DATASETS:
+  DeepLesion:
+    PATH: /home/yan/data/deeplesion
+    TRAIN: Train
+    VALID: Valid
+    TEST:  Test
+    
