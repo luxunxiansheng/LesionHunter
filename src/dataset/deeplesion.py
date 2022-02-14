@@ -34,6 +34,17 @@ from detectron2.structures import BoxMode
 
 __all__ = ["load_deeplesion_instances", "register_deeplesion"]
 
+class DataType(Enum):
+    Train = 1
+    Val = 2
+    Test = 3
+
+
+DEEPLESION_NAMES= { DataType.Train: "DeepLesion"+DataType.Train.name,
+                    DataType.Val:    "DeepLesion"+DataType.Val.name,
+                    DataType.Test:   "DeepLesion"+DataType.Test.name
+                }
+
 CLASS_NAMES = [ "others",
                 "bone",  
                 "abdomen", 
@@ -44,10 +55,8 @@ CLASS_NAMES = [ "others",
                 "soft tissue", 
                 "pelvis"]
 
-class DataType(Enum):
-    Train = 1
-    Val = 2
-    Test = 3
+
+
 
 def load_deeplesion_instances(img_dir: str, data_type: DataType):
     dataset_dicts = {}
@@ -82,11 +91,11 @@ def load_deeplesion_instances(img_dir: str, data_type: DataType):
     return list(dataset_dicts.values())
 
 
-def register_deeplesion(img_path:str,data_type: DataType,class_names: list=CLASS_NAMES):
+def register_deeplesion(img_path:str):
     for data_type in [DataType.Train, DataType.Val, DataType.Test]:
-        dataset_name = "deeplesion_" + data_type.name
-        DatasetCatalog.register(dataset_name,lambda d=data_type.name: load_deeplesion_instances(img_path, d))
-        MetadataCatalog.get(dataset_name).set(thing_classes=class_names)
+        dataset_name = DEEPLESION_NAMES[data_type]
+        DatasetCatalog.register(dataset_name,lambda d=data_type: load_deeplesion_instances(img_path, d))
+        MetadataCatalog.get(dataset_name).set(thing_classes=CLASS_NAMES,img_path=img_path)
 
 def _create_measuremnt(row):
     measurement_coordicats = row["Measurement_coordinates"].split(",")

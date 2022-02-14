@@ -41,7 +41,7 @@ from torch.utils.tensorboard import SummaryWriter
 from detectron2.data import MetadataCatalog, DatasetCatalog
 from detectron2.utils.visualizer import Visualizer
 
-from deeplesion import DataType, load_deeplesion_instances
+from deeplesion import DataType, load_deeplesion_instances, register_deeplesion, DEEPLESION_NAMES
 
 
 class TestDeepLesion(unittest.TestCase):
@@ -49,18 +49,23 @@ class TestDeepLesion(unittest.TestCase):
     def setUp(self) -> None:
         self.writer = SummaryWriter(work_folder+'log/')
         deep_lesion_path = "/home/yan/data/deeplesion"
-        self.dataset_dicts = load_deeplesion_instances(deep_lesion_path, DataType.Train)
+        register_deeplesion(deep_lesion_path)
+
+        dataset_name= DEEPLESION_NAMES[DataType.Test]
+
+        self.dataset_dicts = DatasetCatalog.get(dataset_name)
+        self.deeplesion_metadata = MetadataCatalog.get(dataset_name) 
+                
     
-    def test_deeplesion_dataset(self):
-        deeplesion_metadata = MetadataCatalog.get("Deeplesion_Train") 
-        d = self.dataset_dicts[111]       
-        
-        img = cv2.imread(d["file_name"])
-        img= cv2.normalize(img, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
-        visualizer = Visualizer(img[:, :, ::-1], metadata=deeplesion_metadata, scale=1.5)
-        out = visualizer.draw_dataset_dict(d)
-        img = out.get_image()[:, :, ::-1]
-        self.writer.add_image('train',img,d['image_id'],dataformats='HWC')
+    def test_deeplesion_dataset(self):        
+
+        for data_record in random.sample(self.dataset_dicts,10):       
+            img = cv2.imread(data_record["file_name"])
+            img= cv2.normalize(img, dst=None, alpha=0, beta=255, norm_type=cv2.NORM_MINMAX)
+            visualizer = Visualizer(img[:, :, ::-1], metadata=self.deeplesion_metadata, scale=1.5)
+            out = visualizer.draw_dataset_dict(data_record)
+            img = out.get_image()[:, :, ::-1]
+            self.writer.add_image('train'+data_record['file_name'],img,dataformats='HWC')
 
 
 if __name__ == "__main__":
